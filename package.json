@@ -1,7 +1,7 @@
 {
   "name": "http-client",
   "version": "1.0.0",
-  "description": "Easy and ready to use Typescript Http Client with zero dependency.",
+  "description": "An easy and zero dependencies promise based http-client with Request and Response Converters.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "eQuid96",
