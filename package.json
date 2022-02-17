@@ -8,6 +8,7 @@
   "license": "MIT",
   "scripts": {
     "test": "jest",
+    "ci": "yarn test && yarn build",
     "watch": "yarn clean && tsc -b tsconfig.build.json -w --preserveWatchOutput",
     "build": "yarn clean && tsc -b tsconfig.build.json",
     "clean": "rimraf dist && rimraf tsconfig.tsbuildinfo"
