@@ -1,8 +1,8 @@
-import {HttpMethods, HttpRequest, HttpResponseType} from "./httpRequest";
-import {HttpXhrHandler, IHttpRequestHandler} from "./httpRequestHandler";
-import {IHttpResponse} from "./httpResponse";
-import {HttpHeaders, HttpHeadersLazy} from "./httpHeaders";
-import {IResponseConverter, IRequestConverter} from "./converters";
+import { HttpMethods, HttpRequest, HttpResponseType } from "./http-request";
+import { IHttpRequestHandler } from "./http-request-handler";
+import { IHttpResponse } from "./http-response";
+import { HttpHeaders, HttpHeadersLazy } from "./http-headers";
+import { IResponseConverter, IRequestConverter } from "./converters";
 
 export interface IHttpClient {
     /**
@@ -49,72 +49,82 @@ export interface IHttpClient {
      */
     addRequestConverter(converter: IRequestConverter): IHttpClient;
 
+    readonly requestConverters: IRequestConverter[];
+
     /**
      * Register a new IResponseConverter to the current chain.
      * @param converter
      */
     addResponseConverter(converter: IResponseConverter): IHttpClient;
+
+    readonly responseConverters: IResponseConverter[];
+
+    readonly headers?: HttpHeaders;
 }
 
 export class HttpClient implements IHttpClient {
-    private requestConverters: IRequestConverter[] = [];
-    private responseConverters: IResponseConverter[] = [];
+    public readonly requestConverters: IRequestConverter[] = [];
+    public readonly responseConverters: IResponseConverter[] = [];
 
-    constructor(private readonly handler: IHttpRequestHandler) {}
+    constructor(private readonly handler: IHttpRequestHandler, public readonly headers?: HttpHeaders) {}
 
-    public get(url: string,headers?: HttpHeadersLazy, responseType?: HttpResponseType) {
-        return this.sendRequest('GET', url, null, headers, responseType);
+    public get(url: string, headers?: HttpHeadersLazy, responseType: HttpResponseType = "json") {
+        return this.sendRequest("GET", url, null, headers, responseType);
     }
-    public delete(url: string,headers?: HttpHeadersLazy, responseType?: HttpResponseType) {
-        return this.sendRequest('DELETE', url, null,headers, responseType);
+    public delete(url: string, headers?: HttpHeadersLazy, responseType: HttpResponseType = "json") {
+        return this.sendRequest("DELETE", url, null, headers, responseType);
     }
-    public post<T>(url: string, body: T, headers?: HttpHeadersLazy, responseType?: HttpResponseType) {
-        return this.sendRequest<T>('POST', url, body, headers, responseType);
+    public post<T>(url: string, body: T, headers?: HttpHeadersLazy, responseType: HttpResponseType = "json") {
+        return this.sendRequest<T>("POST", url, body, headers, responseType);
     }
-    public put<T>(url: string, body: T, headers?: HttpHeadersLazy, responseType?: HttpResponseType) {
-        return this.sendRequest<T>('PUT', url, body, headers, responseType);
+    public put<T>(url: string, body: T, headers?: HttpHeadersLazy, responseType: HttpResponseType = "json") {
+        return this.sendRequest<T>("PUT", url, body, headers, responseType);
     }
-    public send<T>(request: HttpRequest<T>){
+    public send<T>(request: HttpRequest<T>) {
         return this.sendRequest(request.method, request.url, request.body, request.headers, request.getResponseType());
     }
     public addRequestConverter(converter: IRequestConverter): IHttpClient {
-        if(this.requestConverters.indexOf(converter) === -1){
+        if (this.requestConverters.indexOf(converter) === -1) {
             this.requestConverters.push(converter);
         }
         return this;
     }
     public addResponseConverter(converter: IResponseConverter): IHttpClient {
-        if(this.responseConverters.indexOf(converter) === -1){
+        if (this.responseConverters.indexOf(converter) === -1) {
             this.responseConverters.push(converter);
         }
         return this;
     }
 
-    public get requestConverterSize(){
+    public get requestConverterSize() {
         return this.requestConverters.length;
     }
-    public get responseConverterSize(){
+    public get responseConverterSize() {
         return this.responseConverters.length;
     }
 
-    private async sendRequest<T>(method:HttpMethods,
-                           url: string,
-                           body?: T,
-                           headers?: HttpHeadersLazy | HttpHeaders,
-                           responseType?: HttpResponseType) {
-        let req = new HttpRequest(method, url, body, headers);
-        if(responseType){
-            req.setResponseType(responseType)
+    private async sendRequest<T>(
+        method: HttpMethods,
+        url: string,
+        body?: T,
+        headers?: HttpHeadersLazy | HttpHeaders,
+        responseType?: HttpResponseType
+    ) {
+        //TODO: Should merge initial headers with args
+        const headersToSend = this.headers ?? headers;
+        let req = new HttpRequest(method, url, body, headersToSend);
+        if (responseType) {
+            req.setResponseType(responseType);
         }
-        if(this.requestConverterSize > 0){
-            for (let i = this.requestConverterSize - 1; i >= 0 ; --i) {
+        if (this.requestConverterSize > 0) {
+            for (let i = this.requestConverterSize - 1; i >= 0; --i) {
                 const converter = this.requestConverters[i];
                 req = converter.convert(req);
             }
         }
         let res = await this.handler.handle(req);
-        if(this.responseConverterSize > 0){
-            for (let i = this.responseConverterSize - 1; i >= 0 ; --i) {
+        if (this.responseConverterSize > 0) {
+            for (let i = this.responseConverterSize - 1; i >= 0; --i) {
                 const converter = this.responseConverters[i];
                 res = converter.convert(res);
             }
@@ -122,11 +132,3 @@ export class HttpClient implements IHttpClient {
         return Promise.resolve(res);
     }
 }
-
-//TODO: Switch request handler based on the runtime platform (dom or node);
-let defaultClient: IHttpClient = new HttpClient(new HttpXhrHandler());
-
-export function httpClient(): IHttpClient{
-    return defaultClient;
-}
-

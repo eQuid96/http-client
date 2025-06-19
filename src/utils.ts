@@ -5,10 +5,10 @@
  * @param str
  * @return an unsigned 32-Bit integer hash.
  */
- export function hashCode(str: string){
+export function hashCode(str: string) {
     let hash = 5381;
     let i = str.length;
-    while(i){
+    while (i) {
         hash = (hash * 33) ^ str.charCodeAt(--i);
     }
     return hash >>> 0;

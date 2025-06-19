@@ -1,5 +1,5 @@
-import {HttpRequest} from "./httpRequest";
-import {IHttpResponse} from "./httpResponse";
+import { HttpRequest } from "./http-request";
+import { IHttpResponse } from "./http-response";
 
 /**
  * Implements this interface to intercept an out coming HttpRequest
@@ -7,7 +7,7 @@ import {IHttpResponse} from "./httpResponse";
  * @example
  * httpClient().addRequestConverter(IRequestConverter)
  */
-export interface IRequestConverter{
+export interface IRequestConverter {
     /**
      * This method will be called just before an HttpRequest will be sent to the server.
      * if this isn't the desired request remember to return the original one.
@@ -23,7 +23,7 @@ export interface IRequestConverter{
  * @example
  * httpClient().addResponseConverter(IResponseConverter)
  */
-export interface IResponseConverter{
+export interface IResponseConverter {
     /**
      * This method will be called when an HttpResponse is received from the server.
      * if this isn't the desired response remember to return the original one.
